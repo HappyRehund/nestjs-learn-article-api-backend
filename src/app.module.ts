@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ArticleModule } from './article/article.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmConfig } from './config/database.config';
 
@@ -11,7 +11,13 @@ import { typeOrmConfig } from './config/database.config';
     ConfigModule.forRoot({
       isGlobal: true
     }),
-    TypeOrmModule.forRoot(typeOrmConfig()),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        ...configService.get('database')
+      })
+    }),
     ArticleModule
   ],
   controllers: [AppController],
