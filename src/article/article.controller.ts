@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, NotFoundException, Param, Post, Put } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import type { IArticle } from './interface/article.interface';
-import { CreateArticleDTO } from './dto/create-article.dto';
+import { RequestArticleDTO } from './dto/request-article.dto';
+import { FindByIdParams } from './dto/find-by-id.params';
 
 @Controller('article')
 export class ArticleController {
@@ -14,22 +15,36 @@ export class ArticleController {
   }
 
   @Get("/:id")
-  findById(@Param() params: any): string {
-    return "satu article dengan id " + params.id;
+  findById(@Param() params: FindByIdParams): IArticle {
+    return this.findArticleById(params.id)
   }
 
   @Post()
-  create(@Body() createArticleDTO: CreateArticleDTO): IArticle {
-    return this.articleService.createArticle(createArticleDTO)
+  create(@Body() req: RequestArticleDTO): IArticle {
+    return this.articleService.createArticle(req)
   }
 
   @Put("/:id")
-  update(@Param() params: any, @Body() req: { name: string, author: string }): string {
-    return `update article dengan id ${params.id} dengan nama ${req.name} dan author ${req.author}`
+  update(@Param() params: FindByIdParams, @Body() request: RequestArticleDTO): IArticle  {
+    const article: IArticle = this.findArticleById(params.id)
+
+    return this.articleService.updateArticle(article.id, request);
   }
 
   @Delete("/:id")
-  delete(@Param() params: any): string {
-    return `hapus article dengan id -> ${params.id}`
+  delete(@Param() params: FindByIdParams): string {
+    const article: IArticle = this.findArticleById(params.id)
+
+    return this.articleService.deleteArticle(article.id)
+  }
+
+  private findArticleById(id: string): IArticle{
+    const article = this.articleService.findArticleById(id)
+
+    if (!article){
+      throw new NotFoundException()
+    }
+
+    return article
   }
 }
