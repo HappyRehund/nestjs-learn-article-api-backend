@@ -1,16 +1,18 @@
 import { IsEnum, IsNotEmpty, IsString } from "class-validator"
 import { ArticleStatus } from "../interface/article.interface"
 
-export class RequestArticleDTO{
+export class RequestCreateArticleDTO{
 
   @IsNotEmpty()
   @IsString()
   title: string
 
   @IsString()
+  @IsNotEmpty()
   content: string
 
   @IsEnum(ArticleStatus)
+  @IsNotEmpty()
   status: ArticleStatus
 
 }

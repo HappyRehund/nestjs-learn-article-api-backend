@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, Post, Put } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import type { IArticle } from './interface/article.interface';
-import { RequestArticleDTO } from './dto/request-article.dto';
+import { RequestCreateArticleDTO } from './dto/create-article.dto';
 import { FindByIdParams } from './dto/find-by-id.params';
+import { RequestUpdateArticleDTO } from './dto/update-article.dto';
 
 @Controller('article')
 export class ArticleController {
@@ -20,24 +21,26 @@ export class ArticleController {
   }
 
   @Post()
-  create(@Body() req: RequestArticleDTO): IArticle {
+  create(@Body() req: RequestCreateArticleDTO): IArticle {
     return this.articleService.createArticle(req)
   }
 
   @Put("/:id")
-  update(@Param() params: FindByIdParams, @Body() request: RequestArticleDTO): IArticle  {
+  update(@Param() params: FindByIdParams, @Body() request: RequestUpdateArticleDTO): IArticle  {
     const article: IArticle = this.findArticleById(params.id)
 
-    return this.articleService.updateArticle(article.id, request);
+    return this.articleService.updateArticle(article, request);
   }
 
   @Delete("/:id")
-  delete(@Param() params: FindByIdParams): string {
+  @HttpCode(HttpStatus.NO_CONTENT)
+  delete(@Param() params: FindByIdParams): void {
     const article: IArticle = this.findArticleById(params.id)
 
     return this.articleService.deleteArticle(article.id)
   }
 
+  // helper memthod
   private findArticleById(id: string): IArticle{
     const article = this.articleService.findArticleById(id)
 

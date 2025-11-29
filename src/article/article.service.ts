@@ -1,14 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import type { IArticle } from './interface/article.interface';
-import { RequestArticleDTO } from './dto/request-article.dto';
+import { RequestCreateArticleDTO } from './dto/create-article.dto';
 import { randomUUID } from 'crypto';
+import { RequestUpdateArticleDTO } from './dto/update-article.dto';
 
 @Injectable()
 export class ArticleService {
 
   private readonly articles: IArticle[] = [];
 
-  createArticle(request: RequestArticleDTO): IArticle{
+  createArticle(request: RequestCreateArticleDTO): IArticle{
     const newArticle: IArticle = {
       id: randomUUID(),
       ...request
@@ -27,28 +28,15 @@ export class ArticleService {
     return this.articles.find( article => article.id === id);
   }
 
-  updateArticle(id: string, request: RequestArticleDTO): IArticle{
-
-    const index = this.articles.findIndex(article => article.id === id)
-    if (index !== -1){
-      throw new Error("article not found")
-    }
-
-    const updatedArticle: IArticle = {
-      id,
-      ...request
-    }
-
-    this.articles[index] = updatedArticle
-
-    return updatedArticle
+  updateArticle(article: IArticle, request: RequestUpdateArticleDTO): IArticle{
+    Object.assign(article, request)
+    return article
   }
 
-  deleteArticle(id: string): string{
+  deleteArticle(id: string): void{
     const index = this.articles.findIndex(article => article.id === id);
     if (index !== -1){
       this.articles.splice(index, 1);
     }
-    return "deleted"
   }
 }
