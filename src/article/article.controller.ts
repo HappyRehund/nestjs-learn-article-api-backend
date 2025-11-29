@@ -1,11 +1,16 @@
 import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { ArticleService } from './article.service';
+import type { IArticle } from './interface/article.interface';
+import { CreateArticleDTO } from './dto/create-article.dto';
 
 @Controller('article')
 export class ArticleController {
 
+  constructor(private readonly articleService: ArticleService){}
+
   @Get()
-  findAll(): string {
-    return "semua articles";
+  findAll(): IArticle[] {
+    return this.articleService.findAllArticles();
   }
 
   @Get("/:id")
@@ -14,8 +19,8 @@ export class ArticleController {
   }
 
   @Post()
-  create(@Body() req: { name: string, author: string }): string {
-    return `membuat article dengan nama ${req.name} dan author ${req.author}`
+  create(@Body() createArticleDTO: CreateArticleDTO): IArticle {
+    return this.articleService.createArticle(createArticleDTO)
   }
 
   @Put("/:id")
