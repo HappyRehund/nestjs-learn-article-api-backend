@@ -1,42 +1,43 @@
 import { Injectable } from '@nestjs/common';
-import type { IArticle } from './interface/article.interface';
-import { RequestCreateArticleDTO } from './dto/create-article.dto';
-import { randomUUID } from 'crypto';
-import { RequestUpdateArticleDTO } from './dto/update-article.dto';
+import { CreateArticleDTO } from './dto/create-article.dto';
+import { UpdateArticleDTO } from './dto/update-article.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Article } from './entities/article.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class ArticleService {
 
-  private readonly articles: IArticle[] = [];
+  constructor(
+    @InjectRepository(Article)
+    private articleRepository: Repository<Article>
+  ){}
 
-  createArticle(request: RequestCreateArticleDTO): IArticle{
-    const newArticle: IArticle = {
-      id: randomUUID(),
-      ...request
-    }
-
-    this.articles.push(newArticle)
-
-    return newArticle
+  async createArticle(request: CreateArticleDTO): Promise<Article>{
+    const newArticle = this.articleRepository.create(request)
+    return await this.articleRepository.save(newArticle)
   }
 
-  findAllArticles(): IArticle[]{
-    return this.articles
+  async findAllArticles(): Promise<Article[]>{
+    return await this.articleRepository.find()
   }
 
-  findArticleById(id: string): IArticle | undefined {
-    return this.articles.find( article => article.id === id);
+  async findArticleById(id: string): Promise<Article | null> {
+    return await this.articleRepository.findOne(
+      {
+        where: {
+          id: id
+        }
+      }
+    )
   }
 
-  updateArticle(article: IArticle, request: RequestUpdateArticleDTO): IArticle{
+  async updateArticle(article: Article, request: UpdateArticleDTO): Promise<Article>{
     Object.assign(article, request)
-    return article
+    return await this.articleRepository.save(article)
   }
 
-  deleteArticle(id: string): void{
-    const index = this.articles.findIndex(article => article.id === id);
-    if (index !== -1){
-      this.articles.splice(index, 1);
-    }
+  async deleteArticle(id: string): Promise<void>{
+    await this.articleRepository.delete(id)
   }
 }

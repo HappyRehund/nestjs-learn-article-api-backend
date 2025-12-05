@@ -9,14 +9,12 @@ import { typeOrmConfig } from './config/database.config';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true
+      isGlobal: true,
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        ...configService.get('database')
-      })
+      useFactory: (configService: ConfigService) => typeOrmConfig(configService)
     }),
     ArticleModule
   ],

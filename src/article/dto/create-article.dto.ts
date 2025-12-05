@@ -1,7 +1,7 @@
-import { IsEnum, IsNotEmpty, IsString } from "class-validator"
-import { ArticleStatus } from "../interface/article.interface"
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator"
+import { ArticleStatus } from "../enums/article-status.enum"
 
-export class RequestCreateArticleDTO{
+export class CreateArticleDTO{
 
   @IsNotEmpty()
   @IsString()
@@ -12,7 +12,7 @@ export class RequestCreateArticleDTO{
   content: string
 
   @IsEnum(ArticleStatus)
-  @IsNotEmpty()
-  status: ArticleStatus
+  @IsOptional()
+  status?: ArticleStatus
 
 }
