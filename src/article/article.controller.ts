@@ -1,16 +1,20 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, Post, Put } from '@nestjs/common';
 import { ArticleService } from './article.service';
-import { IdParams } from 'src/common/find-by-id.params';
-import { CreateArticleDTO } from './dto/create-article.dto';
+import { CreateArticleDto } from './dto/create-article.dto';
 import { ArticleResponseDto } from './dto/article-response.dto';
-import { UpdateArticleDTO } from './dto/update-article.dto';
-import { Article } from './entities/article.entity';
+import { UpdateArticleDto } from './dto/update-article.dto';
 
 
 @Controller('article')
 export class ArticleController {
 
   constructor(private readonly articleService: ArticleService){}
+
+  @Post()
+  async create(@Body() createArticleDto: CreateArticleDto): Promise<ArticleResponseDto> {
+    const newArticle = await this.articleService.createArticle(createArticleDto);
+    return ArticleResponseDto.fromEntity(newArticle);
+  }
 
   @Get()
   async findAll(): Promise<ArticleResponseDto[]> {
@@ -19,43 +23,23 @@ export class ArticleController {
   }
 
   @Get("/:id")
-  async findById(@Param() params: IdParams): Promise<ArticleResponseDto> {
-    const article = await this.findArticleByIdOrFail(params.id);
+  async findOne(@Param('id') id: string): Promise<ArticleResponseDto> {
+    const article = await this.articleService.findArticleByIdOrFail(id)
     return ArticleResponseDto.fromEntity(article);
-  }
-
-  @Post()
-  async create(@Body() req: CreateArticleDTO): Promise<ArticleResponseDto> {
-    const newArticle = await this.articleService.createArticle(req);
-    return ArticleResponseDto.fromEntity(newArticle);
   }
 
   @Put("/:id")
   async update(
-    @Param() params: IdParams,
-    @Body() request: UpdateArticleDTO
+    @Param('id') id: string,
+    @Body() updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto>  {
-    const article = await this.findArticleByIdOrFail(params.id)
-    const updated = await this.articleService.updateArticle(article, request);
-
+    const updated = await this.articleService.updateArticle(id, updateArticleDto);
     return ArticleResponseDto.fromEntity(updated);
   }
 
   @Delete("/:id")
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param() params: IdParams): Promise<void> {
-    await this.findArticleByIdOrFail(params.id)
-    await this.articleService.deleteArticle(params.id)
-  }
-
-  // helper memthod
-  private async findArticleByIdOrFail(id: string): Promise<Article>{
-    const article = await this.articleService.findArticleById(id)
-
-    if (!article){
-      throw new NotFoundException(`Article with id ${id} not found`)
-    }
-
-    return article
+  async remove(@Param('id') id: string): Promise<void> {
+    await this.articleService.deleteArticle(id)
   }
 }

@@ -1,12 +1,12 @@
 import { ArticleStatus } from "../enums/article-status.enum";
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from "typeorm";
 
 @Entity()
 export class Article{
   @PrimaryGeneratedColumn("uuid")
   id: string
 
-  @Column()
+  @Column({ unique: true })
   title: string
 
   @Column({
