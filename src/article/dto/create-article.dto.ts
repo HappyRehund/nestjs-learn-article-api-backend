@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator"
-import { ArticleStatus } from "../enums/article-status.enum"
+import { ArticleStatus } from "../enum/article-status.enum"
 
 export class CreateArticleDto{
 
