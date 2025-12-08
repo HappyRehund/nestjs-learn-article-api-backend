@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { config } from 'dotenv';
-import { jwtConstants } from './constants/auth.constants';
+import { jwtConstants } from './constants/auth.constant';
 
 config()
 

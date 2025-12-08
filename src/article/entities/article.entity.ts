@@ -1,4 +1,4 @@
-import { ArticleStatus } from "../enum/article-status.enum";
+import { ArticleStatus } from "../enums/article-status.enum";
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from "typeorm";
 
 @Entity()

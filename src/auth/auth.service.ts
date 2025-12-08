@@ -4,7 +4,7 @@ import { User } from './entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt'
 import { CreateUserDto } from './dto/create-user.dto';
-import { Role } from './enum/role.enum';
+import { Role } from './enums/role.enum';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
 

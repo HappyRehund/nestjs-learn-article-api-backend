@@ -1,5 +1,5 @@
 import { User } from "../entities/user.entity"
-import { Role } from "../enum/role.enum"
+import { Role } from "../enums/role.enum"
 
 export class GetUserResponseDto {
   name: string
