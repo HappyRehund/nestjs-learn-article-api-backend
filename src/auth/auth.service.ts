@@ -54,7 +54,7 @@ export class AuthService {
     const user = await this.findUserByEmail(loginUserDto.email)
 
     if (!(await bcrypt.compare(loginUserDto.password, user.password))){
-      throw new UnauthorizedException(`user with password ${loginUserDto.password} doesnt exist`)
+      throw new UnauthorizedException(`passwordmu salah goks`)
     }
 
     const payload = {
@@ -81,5 +81,14 @@ export class AuthService {
     }
 
     return user
+  }
+
+  async getUser(id: string): Promise<User>{
+    const user = await this.userRepository.findOneBy({ id })
+
+    if (!user){
+      throw new NotFoundException(`User with id ${id} doesnt exists`)
+    }
+    return user;
   }
 }

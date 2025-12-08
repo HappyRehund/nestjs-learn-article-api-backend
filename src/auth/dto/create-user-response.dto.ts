@@ -5,11 +5,11 @@ export class CreateUserResponseDto {
   email: string
   message: string
 
-  static fromEntity(entity: User): CreateUserResponseDto {
+  static fromUser(user: User): CreateUserResponseDto {
     const dto = new CreateUserResponseDto();
-    dto.name = entity.name
-    dto.email = entity.email
-    dto.message = `User with email ${entity.email} and username ${entity.name} successfully created`
+    dto.name = user.name
+    dto.email = user.email
+    dto.message = `User with email ${user.email} and username ${user.name} successfully created`
     return dto;
   }
 }
