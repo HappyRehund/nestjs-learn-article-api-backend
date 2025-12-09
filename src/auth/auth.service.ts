@@ -1,25 +1,30 @@
 import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { User } from '../user/entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt'
-import { CreateUserDto } from './dto/create-user.dto';
-import { Role } from './enums/role.enum';
-import { LoginUserDto } from './dto/login-user.dto';
+import { RegisterUserRequestDto } from './dto/register-user-request.dto';
+import { Role } from '../user/enums/role.enum';
+import { LoginUserRequestDto } from './dto/login-user-request.dto';
 import { JwtService } from '@nestjs/jwt';
+import { UserService } from 'src/user/user.service';
+import { LoginUserResponseDto } from './dto/login-user-response.dto';
+import { RegisterUserResponseDto } from './dto/register-user-response.dto';
+import { ValidateLocalStrategyResponseDto } from './dto/validate-local-strategy-response.dto';
 
 @Injectable()
 export class AuthService {
 
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly userService: UserService,
+    @InjectDataSource()
     private readonly dataSource: DataSource,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+
   ){}
 
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
-    return await this.dataSource.manager.transaction(async (transactionalEntityManager) => {
+  async registerUser(createUserDto: RegisterUserRequestDto): Promise<RegisterUserResponseDto> {
+    const newUser = await this.dataSource.manager.transaction(async (transactionalEntityManager) => {
 
       const existingUser = await transactionalEntityManager.findOne(User, {
         where: [
@@ -47,11 +52,38 @@ export class AuthService {
 
       return await transactionalEntityManager.save(newUser)
     })
+
+    return RegisterUserResponseDto.fromUser(newUser)
   }
 
-  async loginUser (loginUserDto: LoginUserDto): Promise<{access_token: string, user: User}>{
+    async login(user: ValidateLocalStrategyResponseDto): Promise<LoginUserResponseDto>{
+    const payload = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    }
 
-    const user = await this.findUserByEmail(loginUserDto.email)
+    const access_token = await this.jwtService.signAsync(payload)
+
+    return LoginUserResponseDto.fromValidateLocalStrategyAndToken(user, access_token)
+  }
+
+  async validateUser(email: string, password: string): Promise<ValidateLocalStrategyResponseDto> {
+    const user = await this.userService.findUserByEmail(email)
+
+    const isCorrectPassword = await bcrypt.compare(password, user.password)
+    if (user && isCorrectPassword ){
+      return ValidateLocalStrategyResponseDto.fromUser(user)
+    } else {
+      throw new UnauthorizedException("Username atau password salah")
+    }
+  }
+
+  // DEPRECATED - NOTUSED - BUT STILL THERE FOR REFERENCE
+  async loginUserOld (loginUserDto: LoginUserRequestDto): Promise<{access_token: string, user: User}>{
+
+    const user = await this.userService.findUserByEmail(loginUserDto.email)
 
     if (!(await bcrypt.compare(loginUserDto.password, user.password))){
       throw new UnauthorizedException(`passwordmu salah goks`)
@@ -68,27 +100,5 @@ export class AuthService {
       access_token,
       user
     }
-  }
-
-  async findUserByEmail(email: string): Promise<User> {
-    const user = await this.userRepository.findOneBy(
-      {
-        email: email
-      }
-    )
-    if (!user){
-      throw new UnauthorizedException(`user with email ${email} not exists`)
-    }
-
-    return user
-  }
-
-  async getUser(id: string): Promise<User>{
-    const user = await this.userRepository.findOneBy({ id })
-
-    if (!user){
-      throw new NotFoundException(`User with id ${id} doesnt exists`)
-    }
-    return user;
   }
 }

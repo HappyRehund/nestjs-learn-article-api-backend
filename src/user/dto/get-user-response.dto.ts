@@ -14,4 +14,8 @@ export class GetUserResponseDto {
 
     return dto
   }
+
+  static fromUsers(users: User[]): GetUserResponseDto[] {
+    return users.map(user => this.fromUser(user))
+  }
 }

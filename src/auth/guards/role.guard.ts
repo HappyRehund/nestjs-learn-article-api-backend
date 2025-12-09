@@ -1,8 +1,8 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { Role } from "../enums/role.enum";
+import { Role } from "../../user/enums/role.enum";
 import { ROLES_KEY } from "../decorators/role.decorator";
-import { User } from "../entities/user.entity";
+import { User } from "../../user/entities/user.entity";
 
 interface RequestWithUser extends Request {
   user: User

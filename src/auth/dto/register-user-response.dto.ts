@@ -1,12 +1,12 @@
-import { User } from "../entities/user.entity"
+import { User } from "../../user/entities/user.entity"
 
-export class CreateUserResponseDto {
+export class RegisterUserResponseDto {
   name: string
   email: string
   message: string
 
-  static fromUser(user: User): CreateUserResponseDto {
-    const dto = new CreateUserResponseDto();
+  static fromUser(user: User): RegisterUserResponseDto {
+    const dto = new RegisterUserResponseDto();
     dto.name = user.name
     dto.email = user.email
     dto.message = `User with email ${user.email} and username ${user.name} successfully created`
