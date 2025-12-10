@@ -4,12 +4,13 @@ import { RegisterUserRequestDto } from './dto/register-user-request.dto';
 import { RegisterUserResponseDto } from './dto/register-user-response.dto';
 import { LoginUserRequestDto } from './dto/login-user-request.dto';
 import { LoginUserResponseDto } from './dto/login-user-response.dto';
-import { AuthGuard } from './guards/manual-jwt-auth.guard';
 import { RolesGuard } from './guards/role.guard';
 import { Roles } from './decorators/role.decorator';
 import { Role } from '../user/enums/role.enum';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import type { RequestPassedValidation } from './interfaces/request.interface';
+import type { RequestPassedValidation, RequestWithRefreshToken } from '../interfaces/request.interface';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JwtRtAuthGuard } from './guards/jwt-rt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -28,7 +29,17 @@ export class AuthController {
     return this.authService.login(req.user)
   }
 
-  @UseGuards(AuthGuard, RolesGuard)
+  @UseGuards(JwtRtAuthGuard)
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(@Req() req: RequestWithRefreshToken): Promise<{ accessToken: string, refreshToken: string}>{
+    const id = req.user.id
+    const refreshToken = req.user.refreshToken
+
+    return await this.authService.refreshTokens(id, refreshToken)
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Get('test')
   getTest(): { message: string }{

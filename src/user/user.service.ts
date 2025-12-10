@@ -26,7 +26,26 @@ export class UserService {
     return user;
   }
 
+  async updateUserRefreshToken(id: string, hashedRefreshToken: string){
+    const user = await this.findUserById(id)
 
+    user.hashedRefreshToken = hashedRefreshToken
+
+    await this.userRepository.save(user)
+  }
+
+  async findUserById(id: string): Promise<User> {
+    const user = await this.userRepository.findOneBy(
+      {
+        id: id
+      }
+    )
+    if(!user){
+      throw new UnauthorizedException('user with this id not exists')
+    }
+
+    return user
+  }
   async findUserByEmail(email: string): Promise<User> {
     const user = await this.userRepository.findOneBy(
       {

@@ -22,6 +22,13 @@ export class User {
   })
   role: Role
 
+  @Column({
+    type: 'varchar',
+    nullable: true,
+    select: false
+  })
+  hashedRefreshToken: string | null
+
   @CreateDateColumn()
   readonly createdAt: Date
 

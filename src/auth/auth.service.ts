@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
@@ -11,6 +11,8 @@ import { UserService } from 'src/user/user.service';
 import { LoginUserResponseDto } from './dto/login-user-response.dto';
 import { RegisterUserResponseDto } from './dto/register-user-response.dto';
 import { ValidateLocalStrategyResponseDto } from './dto/validate-local-strategy-response.dto';
+import { jwtConstants } from './constants/auth.constant';
+import { JwtPayloadData } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -56,17 +58,13 @@ export class AuthService {
     return RegisterUserResponseDto.fromUser(newUser)
   }
 
-    async login(user: ValidateLocalStrategyResponseDto): Promise<LoginUserResponseDto>{
-    const payload = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role
-    }
+  async login(user: ValidateLocalStrategyResponseDto): Promise<LoginUserResponseDto>{
 
-    const access_token = await this.jwtService.signAsync(payload)
+    const tokens = await this.generateTokens(user.id, user.name, user.email, user.role)
 
-    return LoginUserResponseDto.fromValidateLocalStrategyAndToken(user, access_token)
+    await this.updateRefreshTokenHash(user.id, tokens.refreshToken)
+
+    return LoginUserResponseDto.fromValidateLocalStrategyAndTokens(user, tokens.accessToken, tokens.refreshToken)
   }
 
   async validateUser(email: string, password: string): Promise<ValidateLocalStrategyResponseDto> {
@@ -78,6 +76,55 @@ export class AuthService {
     } else {
       throw new UnauthorizedException("Username atau password salah")
     }
+  }
+
+  async generateTokens(id: string, name: string, email: string, role: Role): Promise<{ accessToken: string, refreshToken: string }> {
+    const payload: JwtPayloadData = {
+      id,
+      name,
+      email,
+      role
+    };
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(
+        payload,
+        {
+          secret: jwtConstants.secret_access,
+          expiresIn: jwtConstants.access_expiration
+        }
+      ),
+
+      this.jwtService.signAsync(
+        payload,
+        {
+          secret: jwtConstants.secret_refresh,
+          expiresIn: jwtConstants.secret_expiration
+        }
+      )
+    ]);
+
+    return { accessToken, refreshToken };
+  }
+
+  async updateRefreshTokenHash(id: string, refreshToken: string){
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10)
+    await this.userService.updateUserRefreshToken(id, hashedRefreshToken)
+  }
+
+  async refreshTokens(id: string, refreshToken: string){
+    const user = await this.userService.findUserById(id)
+
+    if(!user || !user.hashedRefreshToken) throw new ForbiddenException('Access Denied')
+
+    const refreshTokenMatches = await bcrypt.compare(refreshToken, user.hashedRefreshToken)
+
+    if(!refreshTokenMatches) throw new ForbiddenException('Access Denied')
+
+    const tokens = await this.generateTokens(user.id, user.name, user.email, user.role)
+    await this.updateRefreshTokenHash(user.id, tokens.refreshToken)
+
+    return tokens
   }
 
   // DEPRECATED - NOTUSED - BUT STILL THERE FOR REFERENCE

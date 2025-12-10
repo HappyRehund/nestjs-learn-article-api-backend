@@ -5,6 +5,8 @@ import { RolesGuard } from 'src/auth/guards/role.guard';
 import { Roles } from 'src/auth/decorators/role.decorator';
 import { Role } from './enums/role.enum';
 import { GetUserResponseDto } from './dto/get-user-response.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import type { RequestWithJwtPayload } from 'src/interfaces/request.interface';
 
 @Controller('user')
 export class UserController {
@@ -13,7 +15,7 @@ export class UserController {
     private readonly userService: UserService
   ){}
 
-  @UseGuards(AuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Get()
   async findAll(): Promise<GetUserResponseDto[]> {
@@ -21,9 +23,9 @@ export class UserController {
     return GetUserResponseDto.fromUsers(users)
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Get('profile')
-  async getUser(@Request() request): Promise<GetUserResponseDto> {
+  async getUser(@Request() request: RequestWithJwtPayload): Promise<GetUserResponseDto> {
     const user = await this.userService.getUser(request.user.id)
     return GetUserResponseDto.fromUser(user)
   }

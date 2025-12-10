@@ -8,7 +8,9 @@ import { config } from 'dotenv';
 import { jwtConstants } from './constants/auth.constant';
 import { UserModule } from 'src/user/user.module';
 import { PassportModule } from '@nestjs/passport';
-import { LocalStrategy } from './local.strategy';
+import { LocalStrategy } from './strategies/local.strategy';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { JwtRtStrategy } from './strategies/jwt-rt.strategy';
 
 config()
 
@@ -16,13 +18,13 @@ config()
   imports: [
     TypeOrmModule.forFeature([User]),
     JwtModule.register({
-      secret: jwtConstants.secret ,
-      signOptions: { expiresIn: '7d' }
+      secret: jwtConstants.secret_access ,
+      signOptions: { expiresIn: jwtConstants.access_expiration }
     }),
     UserModule,
     PassportModule
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy, JwtRtStrategy],
 })
 export class AuthModule {}
