@@ -1,5 +1,6 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Role } from "../enums/role.enum";
+import { Profile } from "src/profile/entities/profile.entity";
 
 @Entity()
 export class User {
@@ -28,6 +29,9 @@ export class User {
     select: false
   })
   hashedRefreshToken: string | null
+
+  @OneToOne(() => Profile, (profile) => profile.user )
+  profile: Profile
 
   @CreateDateColumn()
   readonly createdAt: Date
