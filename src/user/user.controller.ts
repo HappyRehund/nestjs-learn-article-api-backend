@@ -1,4 +1,4 @@
-import { Controller, Get, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Put, Request, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { AuthGuard } from 'src/auth/guards/manual-jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/role.guard';
@@ -7,6 +7,8 @@ import { Role } from './enums/role.enum';
 import { GetUserResponseDto } from './dto/get-user-response.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import type { RequestWithJwtPayload } from 'src/interfaces/request.interface';
+import { UpdateRoleRequestDto } from './dto/update-role-request.dto';
+import { UpdateRoleResponseDto } from './dto/update-role-response.dto';
 
 @Controller('user')
 export class UserController {
@@ -19,14 +21,22 @@ export class UserController {
   @Roles(Role.ADMIN)
   @Get()
   async findAll(): Promise<GetUserResponseDto[]> {
-    const users = await this.userService.findAllUser()
-    return GetUserResponseDto.fromUsers(users)
+    return await this.userService.findAllUser()
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('profile')
+  @Get('/profile')
   async getUser(@Request() request: RequestWithJwtPayload): Promise<GetUserResponseDto> {
-    const user = await this.userService.getUser(request.user.id)
-    return GetUserResponseDto.fromUser(user)
+    return await this.userService.findOneUser(request.user.id)
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Put('/:id')
+  async updateUserRole(
+    @Param('id') id: string,
+    @Body() updateRoleRequestDto: UpdateRoleRequestDto
+  ): Promise<UpdateRoleResponseDto> {
+    return await this.userService.updateUserRole(id, updateRoleRequestDto)
   }
 }

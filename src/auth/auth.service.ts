@@ -1,7 +1,7 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/entities/user.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt'
 import { RegisterUserRequestDto } from './dto/register-user-request.dto';
 import { Role } from '../user/enums/role.enum';
@@ -99,7 +99,7 @@ export class AuthService {
         payload,
         {
           secret: jwtConstants.secret_refresh,
-          expiresIn: jwtConstants.secret_expiration
+          expiresIn: jwtConstants.refresh_expiration
         }
       )
     ]);
@@ -107,13 +107,28 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
+  async generateAccessToken(id: string, name: string, email: string, role: Role): Promise<string> {
+    const payload: JwtPayloadData = {
+      id,
+      name,
+      email,
+      role
+    }
+
+    return await this.jwtService.signAsync(payload, {
+      secret: jwtConstants.secret_access,
+      expiresIn: jwtConstants.access_expiration
+    })
+  }
+
   async updateRefreshTokenHash(id: string, refreshToken: string){
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10)
     await this.userService.updateUserRefreshToken(id, hashedRefreshToken)
   }
 
-  async refreshTokens(id: string, refreshToken: string){
-    const user = await this.userService.findUserById(id)
+  async refreshToken(id: string, refreshToken: string){
+
+    const user = await this.userService.findUserByIdWithHashedRT(id)
 
     if(!user || !user.hashedRefreshToken) throw new ForbiddenException('Access Denied')
 
@@ -121,14 +136,16 @@ export class AuthService {
 
     if(!refreshTokenMatches) throw new ForbiddenException('Access Denied')
 
-    const tokens = await this.generateTokens(user.id, user.name, user.email, user.role)
-    await this.updateRefreshTokenHash(user.id, tokens.refreshToken)
+    const accessToken = await this.generateAccessToken(user.id, user.name, user.email, user.role)
 
-    return tokens
+    return {
+      accessToken,
+      refreshToken
+    }
   }
 
   // DEPRECATED - NOTUSED - BUT STILL THERE FOR REFERENCE
-  async loginUserOld (loginUserDto: LoginUserRequestDto): Promise<{access_token: string, user: User}>{
+  async loginUserOld (loginUserDto: LoginUserRequestDto): Promise<{accessToken: string, user: User}>{
 
     const user = await this.userService.findUserByEmail(loginUserDto.email)
 
@@ -142,9 +159,9 @@ export class AuthService {
       role: user.role
     }
 
-    const access_token = await this.jwtService.signAsync(payload)
+    const accessToken = await this.jwtService.signAsync(payload)
     return {
-      access_token,
+      accessToken,
       user
     }
   }

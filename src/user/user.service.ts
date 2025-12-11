@@ -2,6 +2,9 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { UpdateRoleResponseDto } from './dto/update-role-response.dto';
+import { UpdateRoleRequestDto } from './dto/update-role-request.dto';
+import { GetUserResponseDto } from './dto/get-user-response.dto';
 
 @Injectable()
 export class UserService {
@@ -12,18 +15,26 @@ export class UserService {
   ){
 
   }
-  async findAllUser(): Promise<User[]> {
-    return await this.userRepository.find()
+  async findAllUser(): Promise<GetUserResponseDto[]> {
+    const users = await this.userRepository.find()
+
+    return GetUserResponseDto.fromUsers(users)
   }
 
+  async findOneUser(id: string): Promise<GetUserResponseDto> {
+    const user = await this.findUserById(id)
 
-  async getUser(id: string): Promise<User>{
-    const user = await this.userRepository.findOneBy({ id })
+    return GetUserResponseDto.fromUser(user)
+  }
 
-    if (!user){
-      throw new NotFoundException(`User with id ${id} doesnt exists`)
-    }
-    return user;
+  async updateUserRole(id: string, request: UpdateRoleRequestDto): Promise<UpdateRoleResponseDto> {
+    const user = await this.findUserById(id)
+
+    user.role = request.role
+
+    await this.userRepository.save(user)
+
+    return UpdateRoleResponseDto.fromUser(user)
   }
 
   async updateUserRefreshToken(id: string, hashedRefreshToken: string){
@@ -59,10 +70,13 @@ export class UserService {
     return user
   }
 
-  async findUserByName(name: string): Promise<User> {
-    const user = await this.userRepository.findOneBy(
+  async findUserByIdWithHashedRT(id: string): Promise<User> {
+    const user = await this.userRepository.findOne(
       {
-        name
+        where: {
+          id
+        },
+        select: ['id', 'name', 'email', 'role', 'hashedRefreshToken']
       }
     )
     if (!user){

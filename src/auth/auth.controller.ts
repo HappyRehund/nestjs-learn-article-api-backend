@@ -36,7 +36,7 @@ export class AuthController {
     const id = req.user.id
     const refreshToken = req.user.refreshToken
 
-    return await this.authService.refreshTokens(id, refreshToken)
+    return await this.authService.refreshToken(id, refreshToken)
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -52,8 +52,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('loginOld')
   async loginOld(@Body() loginUserDto: LoginUserRequestDto): Promise<LoginUserResponseDto> {
-    const { access_token, user } = await this.authService.loginUserOld(loginUserDto)
+    const { accessToken, user } = await this.authService.loginUserOld(loginUserDto)
 
-    return LoginUserResponseDto.fromUserAndToken(user, access_token)
+    return LoginUserResponseDto.fromUserAndToken(user, accessToken)
   }
 }
